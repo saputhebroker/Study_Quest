@@ -1,0 +1,258 @@
+:root {
+  color-scheme: dark;
+  --bg: #0b0d12;
+  --panel: #11141b;
+  --line: #222736;
+  --text: #e6e8ee;
+  --muted: #8a90a2;
+  --accent: #7c8cff;
+  --good: #34d399;
+  --bad: #f87171;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+/* hide the normal arrow on devices with a mouse */
+@media (pointer: fine) {
+  * {
+    cursor: none !important;
+  }
+}
+
+body {
+  margin: 0;
+  font-family: Inter, system-ui, sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  min-height: 100vh;
+}
+
+/* soft glow that follows the mouse */
+body::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 0;
+  background: radial-gradient(
+    480px circle at var(--mx, 50%) var(--my, 25%),
+    rgba(124, 140, 255, 0.13),
+    transparent 65%
+  );
+}
+
+.app {
+  position: relative;
+  z-index: 1;
+  max-width: 720px;
+  margin: 0 auto;
+  padding: 64px 20px 100px;
+}
+
+h1 {
+  font-size: 2.4rem;
+  font-weight: 650;
+  letter-spacing: -0.03em;
+  margin: 0;
+}
+h1 span {
+  color: var(--accent);
+}
+.sub {
+  color: var(--muted);
+  margin: 6px 0 28px;
+}
+
+textarea {
+  width: 100%;
+  min-height: 170px;
+  resize: vertical;
+  padding: 16px;
+  font: inherit;
+  font-size: 16px;
+  line-height: 1.5;
+  color: var(--text);
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  outline: none;
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+textarea:focus {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 4px rgba(124, 140, 255, 0.12);
+}
+textarea::placeholder {
+  color: #586078;
+}
+
+.row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin: 14px 0 8px;
+}
+.count {
+  color: var(--muted);
+  font-size: 14px;
+}
+
+button {
+  font: inherit;
+}
+.primary {
+  padding: 10px 20px;
+  border: none;
+  border-radius: 10px;
+  background: var(--accent);
+  color: #0b0d12;
+  font-weight: 600;
+  transition: transform 0.15s, box-shadow 0.2s, opacity 0.2s;
+}
+.primary:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 24px rgba(124, 140, 255, 0.35);
+}
+.primary:active:not(:disabled) {
+  transform: translateY(0) scale(0.98);
+}
+.primary:disabled {
+  opacity: 0.35;
+}
+.ghost {
+  padding: 8px 16px;
+  border-radius: 10px;
+  border: 1px solid var(--line);
+  background: transparent;
+  color: var(--text);
+  transition: border-color 0.2s;
+}
+.ghost:hover {
+  border-color: var(--accent);
+}
+
+.meta {
+  color: var(--muted);
+  font-size: 14px;
+  margin: 28px 0 4px;
+}
+
+.card {
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  padding: 20px;
+  margin: 14px 0;
+  opacity: 0;
+  animation: rise 0.45s ease forwards;
+  transition: border-color 0.2s;
+}
+.card:hover {
+  border-color: #2f3650;
+}
+.card h3 {
+  margin: 0 0 14px;
+  font-size: 17px;
+  font-weight: 550;
+  line-height: 1.4;
+}
+
+.option {
+  display: block;
+  width: 100%;
+  text-align: left;
+  padding: 11px 14px;
+  margin: 8px 0;
+  border-radius: 10px;
+  border: 1px solid var(--line);
+  background: transparent;
+  color: var(--text);
+  transition: transform 0.15s, border-color 0.15s, background 0.15s;
+}
+.option:hover:not(:disabled) {
+  transform: translateX(4px);
+  border-color: var(--accent);
+}
+.option.selected {
+  border-color: var(--accent);
+  background: rgba(124, 140, 255, 0.1);
+}
+.option.correct {
+  border-color: var(--good);
+  background: rgba(52, 211, 153, 0.12);
+}
+.option.wrong {
+  border-color: var(--bad);
+  background: rgba(248, 113, 113, 0.12);
+}
+
+.explain {
+  color: var(--muted);
+  font-size: 14px;
+  margin: 12px 0 0;
+}
+.error {
+  color: var(--bad);
+}
+
+.result {
+  margin-top: 24px;
+  padding: 20px;
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  background: var(--panel);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 22px;
+  font-weight: 600;
+}
+.result small {
+  color: var(--accent);
+  font-size: 16px;
+  font-weight: 500;
+}
+
+.progress {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 3px;
+  z-index: 50;
+}
+.progress div {
+  height: 100%;
+  background: var(--accent);
+  transition: width 0.3s ease;
+}
+
+@keyframes rise {
+  from {
+    opacity: 0;
+    transform: translateY(14px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+/* rocket cursor */
+.rocket-canvas {
+  position: fixed;
+  inset: 0;
+  width: 100vw;
+  height: 100vh;
+  pointer-events: none;
+  z-index: 9999;
+}
+
+/* touch screens have no mouse, so no custom cursor */
+@media (pointer: coarse) {
+  .rocket-canvas {
+    display: none;
+  }
+}
