@@ -3,6 +3,7 @@ import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
 import User from "../models/User.js";
 import requireAuth from "../middleware/auth.js";
+import publicUser from "../utils/publicUser.js";
 
 const router = express.Router();
 
@@ -12,10 +13,7 @@ function makeToken(user) {
   });
 }
 
-function publicUser(u) {
-  return { id: u._id, name: u.name, email: u.email, xp: u.xp, streak: u.streak };
-}
-
+  
 router.post("/register", async (req, res) => {
   try {
     const { name, email, password } = req.body;
