@@ -326,3 +326,25 @@ button {
   color: var(--accent);
   font-size: 14px;
 }
+/* weak spots */
+.notice {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 14px 16px;
+  margin: 0 0 24px;
+  border: 1px solid var(--accent);
+  border-radius: 12px;
+  background: rgba(124, 140, 255, 0.08);
+}
+.notice.quiet {
+  border-color: var(--line);
+  background: transparent;
+  color: var(--muted);
+  font-size: 14px;
+}
+.mastered {
+  color: var(--good);
+  font-size: 14px;
+}

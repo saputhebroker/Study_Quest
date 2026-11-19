@@ -6,6 +6,7 @@ import quizRoutes from "./routes/quiz.js";
 import authRoutes from "./routes/auth.js";
 import requireAuth from "./middleware/auth.js";
 import progressRoutes from "./routes/progress.js";
+import reviewRoutes from "./routes/review.js";
 dotenv.config();
 
 if (!process.env.JWT_SECRET) {
@@ -20,6 +21,7 @@ app.use(express.json({ limit: "50mb" }));
 app.use("/api/quiz", requireAuth, quizRoutes);
 app.use("/api/auth", authRoutes);
 app.use("/api/progress", progressRoutes);
+app.use("/api/review", reviewRoutes);
 
 app.get("/", (req, res) => res.send("Study Quest API running"));
 

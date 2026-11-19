@@ -1,22 +1,18 @@
 import express from "express";
 import User from "../models/User.js";
 import QuizResult from "../models/QuizResult.js";
+import WeakQuestion from "../models/WeakQuestion.js";
 import requireAuth from "../middleware/auth.js";
 import publicUser from "../utils/publicUser.js";
+import applyStreak from "../utils/streak.js";
+import { shiftDay, validDate } from "../utils/dates.js";
+import questionKey from "../utils/questionKey.js";
 
 const router = express.Router();
 router.use(requireAuth);
 
 const XP_PER_CORRECT = 10;
 const MAX_QUESTIONS = 500;
-
-// "2026-11-19" -> "2026-11-18"
-function prevDay(dateStr) {
-  const [y, m, d] = dateStr.split("-").map(Number);
-  const dt = new Date(Date.UTC(y, m - 1, d));
-  dt.setUTCDate(dt.getUTCDate() - 1);
-  return dt.toISOString().slice(0, 10);
-}
 
 function validItem(r) {
   const okIndex = (n) => Number.isInteger(n) && n >= 0 && n < 4;
@@ -46,7 +42,7 @@ router.post("/submit", async (req, res) => {
     ) {
       return res.status(400).json({ error: "Invalid quiz data." });
     }
-    if (typeof localDate !== "string" || !/^\d{4}-\d{2}-\d{2}$/.test(localDate)) {
+    if (!validDate(localDate)) {
       return res.status(400).json({ error: "Invalid date." });
     }
 
@@ -56,33 +52,50 @@ router.post("/submit", async (req, res) => {
     const score = results.filter((r) => r.chosenIndex === r.answerIndex).length;
     const xpGained = score * XP_PER_CORRECT;
 
-    // daily streak
-    if (user.lastActiveDate !== localDate) {
-      user.streak =
-        user.lastActiveDate === prevDay(localDate) ? user.streak + 1 : 1;
-      user.lastActiveDate = localDate;
-    }
+    applyStreak(user, localDate);
     user.xp += xpGained;
     await user.save();
 
-    const wrong = results
+    const wrongItems = results
       .filter((r) => r.chosenIndex !== r.answerIndex)
-      .slice(0, 100)
-      .map((r) => ({
-        question: r.question,
-        options: r.options,
-        answerIndex: r.answerIndex,
-        chosenIndex: r.chosenIndex,
-        explanation: r.explanation || "",
-      }));
+      .slice(0, 100);
 
     await QuizResult.create({
       user: user._id,
       score,
       total: results.length,
       xpGained,
-      wrong,
+      wrong: wrongItems.map((r) => ({
+        question: r.question,
+        options: r.options,
+        answerIndex: r.answerIndex,
+        chosenIndex: r.chosenIndex,
+        explanation: r.explanation || "",
+      })),
     });
+
+    // weak spots: wrong questions come back for review tomorrow
+    if (wrongItems.length > 0) {
+      await WeakQuestion.bulkWrite(
+        wrongItems.map((r) => ({
+          updateOne: {
+            filter: { user: user._id, key: questionKey(r.question) },
+            update: {
+              $set: {
+                question: r.question,
+                options: r.options,
+                answerIndex: r.answerIndex,
+                explanation: r.explanation || "",
+                box: 1,
+                dueDate: shiftDay(localDate, 1),
+              },
+              $inc: { timesWrong: 1 },
+            },
+            upsert: true,
+          },
+        }))
+      );
+    }
 
     res.status(201).json({ xpGained, score, user: publicUser(user) });
   } catch (err) {

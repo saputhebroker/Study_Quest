@@ -2,18 +2,11 @@ import { useEffect, useState } from "react";
 import "./App.css";
 import Cursor from "./Cursor";
 import Auth from "./Auth";
+import Review from "./Review";
+import { localDate } from "./dates";
 
 const API = "http://localhost:5000";
 const TOKEN_KEY = "studyquest_token";
-
-// local date as "YYYY-MM-DD", offset in days
-function localDate(offset = 0) {
-  const d = new Date();
-  d.setDate(d.getDate() + offset);
-  const m = String(d.getMonth() + 1).padStart(2, "0");
-  const day = String(d.getDate()).padStart(2, "0");
-  return `${d.getFullYear()}-${m}-${day}`;
-}
 
 export default function App() {
   const [token, setToken] = useState(() => localStorage.getItem(TOKEN_KEY));
@@ -21,6 +14,7 @@ export default function App() {
   const [checking, setChecking] = useState(
     () => !!localStorage.getItem(TOKEN_KEY)
   );
+  const [view, setView] = useState("quiz");
 
   const [notes, setNotes] = useState("");
   const [quiz, setQuiz] = useState(null);
@@ -31,11 +25,14 @@ export default function App() {
   const [saved, setSaved] = useState(null);
   const [saveMsg, setSaveMsg] = useState("");
   const [history, setHistory] = useState([]);
+  const [dueCount, setDueCount] = useState(0);
+  const [weakTotal, setWeakTotal] = useState(0);
 
   function logout() {
     localStorage.removeItem(TOKEN_KEY);
     setToken(null);
     setUser(null);
+    setView("quiz");
     setNotes("");
     setQuiz(null);
     setAnswers({});
@@ -44,6 +41,8 @@ export default function App() {
     setSaved(null);
     setSaveMsg("");
     setHistory([]);
+    setDueCount(0);
+    setWeakTotal(0);
   }
 
   function handleAuth(newToken, newUser) {
@@ -67,6 +66,22 @@ export default function App() {
     }
   }
 
+  async function loadStats(tok) {
+    try {
+      const res = await fetch(
+        `${API}/api/review/stats?localDate=${localDate()}`,
+        { headers: { Authorization: `Bearer ${tok}` } }
+      );
+      if (res.ok) {
+        const data = await res.json();
+        setDueCount(data.dueCount);
+        setWeakTotal(data.total);
+      }
+    } catch {
+      // stats are optional, so ignore errors
+    }
+  }
+
   // check that the saved token is still valid
   useEffect(() => {
     if (!token) {
@@ -83,6 +98,7 @@ export default function App() {
         if (!cancelled) {
           setUser(data.user);
           loadHistory(token);
+          loadStats(token);
         }
       })
       .catch(() => {
@@ -157,6 +173,7 @@ export default function App() {
       setUser(data.user);
       setSaved({ xpGained: data.xpGained });
       loadHistory(token);
+      loadStats(token);
     } catch (e) {
       setSaveMsg(
         e.message === "Failed to fetch" ? "Could not save progress." : e.message
@@ -171,6 +188,12 @@ export default function App() {
     setSaved(null);
     setSaveMsg("");
     window.scrollTo({ top: 0, behavior: "smooth" });
+  }
+
+  function leaveReview() {
+    setView("quiz");
+    loadStats(token);
+    window.scrollTo({ top: 0 });
   }
 
   if (checking) {
@@ -189,6 +212,20 @@ export default function App() {
       <>
         <Cursor />
         <Auth onAuth={handleAuth} />
+      </>
+    );
+  }
+
+  if (view === "review") {
+    return (
+      <>
+        <Cursor />
+        <Review
+          token={token}
+          onUser={setUser}
+          onExit={leaveReview}
+          onUnauthorized={logout}
+        />
       </>
     );
   }
@@ -236,6 +273,25 @@ export default function App() {
           Study <span>Quest</span>
         </h1>
         <p className="sub">Paste your notes. Get a quiz.</p>
+
+        {dueCount > 0 && (
+          <div className="notice">
+            <span>
+              {dueCount} question{dueCount === 1 ? "" : "s"} due for review
+            </span>
+            <button className="primary" onClick={() => setView("review")}>
+              Review now
+            </button>
+          </div>
+        )}
+        {dueCount === 0 && weakTotal > 0 && (
+          <div className="notice quiet">
+            <span>
+              {weakTotal} weak question{weakTotal === 1 ? "" : "s"} waiting for
+              their review day
+            </span>
+          </div>
+        )}
 
         <textarea
           value={notes}
