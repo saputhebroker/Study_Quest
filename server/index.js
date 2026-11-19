@@ -4,6 +4,7 @@ import dotenv from "dotenv";
 import mongoose from "mongoose";
 import quizRoutes from "./routes/quiz.js";
 import authRoutes from "./routes/auth.js";
+import requireAuth from "./middleware/auth.js";
 
 dotenv.config();
 
@@ -16,7 +17,7 @@ const app = express();
 
 app.use(cors());
 app.use(express.json({ limit: "50mb" }));
-app.use("/api/quiz", quizRoutes);
+app.use("/api/quiz", requireAuth, quizRoutes);
 app.use("/api/auth", authRoutes);
 
 app.get("/", (req, res) => res.send("Study Quest API running"));

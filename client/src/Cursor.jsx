@@ -62,7 +62,7 @@ export default function Cursor() {
       root.setProperty("--mx", mouse.x + "px");
       root.setProperty("--my", mouse.y + "px");
 
-      hot = !!(e.target.closest && e.target.closest("button, textarea"));
+      hot = !!(e.target.closest && e.target.closest("button, textarea,input"));
     }
 
     function onLeave() {

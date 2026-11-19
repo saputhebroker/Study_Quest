@@ -256,3 +256,73 @@ button {
     display: none;
   }
 }
+/* login and signup */
+.auth-card {
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  padding: 24px;
+  max-width: 400px;
+}
+.tabs {
+  display: flex;
+  gap: 6px;
+  margin-bottom: 18px;
+}
+.tab {
+  flex: 1;
+  padding: 9px;
+  border-radius: 9px;
+  border: 1px solid var(--line);
+  background: transparent;
+  color: var(--muted);
+  transition: color 0.2s, border-color 0.2s, background 0.2s;
+}
+.tab:hover {
+  border-color: var(--accent);
+}
+.tab.active {
+  color: var(--text);
+  border-color: var(--accent);
+  background: rgba(124, 140, 255, 0.1);
+}
+.field {
+  display: block;
+  width: 100%;
+  padding: 12px 14px;
+  margin: 0 0 12px;
+  font: inherit;
+  color: var(--text);
+  background: var(--bg);
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  outline: none;
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+.field:focus {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 4px rgba(124, 140, 255, 0.12);
+}
+.field::placeholder {
+  color: #586078;
+}
+.auth-card .primary {
+  width: 100%;
+  margin-top: 4px;
+}
+
+/* top bar */
+.topbar {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 14px;
+  margin-bottom: 24px;
+}
+.who {
+  font-weight: 550;
+}
+.xp {
+  color: var(--accent);
+  font-size: 14px;
+}

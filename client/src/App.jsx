@@ -1,16 +1,68 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import "./App.css";
 import Cursor from "./Cursor";
+import Auth from "./Auth";
 
 const API = "http://localhost:5000";
+const TOKEN_KEY = "studyquest_token";
 
 export default function App() {
+  const [token, setToken] = useState(() => localStorage.getItem(TOKEN_KEY));
+  const [user, setUser] = useState(null);
+  const [checking, setChecking] = useState(
+    () => !!localStorage.getItem(TOKEN_KEY)
+  );
+
   const [notes, setNotes] = useState("");
   const [quiz, setQuiz] = useState(null);
   const [answers, setAnswers] = useState({});
   const [submitted, setSubmitted] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+
+  function logout() {
+    localStorage.removeItem(TOKEN_KEY);
+    setToken(null);
+    setUser(null);
+    setNotes("");
+    setQuiz(null);
+    setAnswers({});
+    setSubmitted(false);
+    setError("");
+  }
+
+  function handleAuth(newToken, newUser) {
+    localStorage.setItem(TOKEN_KEY, newToken);
+    setToken(newToken);
+    setUser(newUser);
+    setChecking(false);
+  }
+
+  // on page load (or login), check that the saved token is still valid
+  useEffect(() => {
+    if (!token) {
+      setChecking(false);
+      return;
+    }
+    let cancelled = false;
+    fetch(`${API}/api/auth/me`, {
+      headers: { Authorization: `Bearer ${token}` },
+    })
+      .then(async (res) => {
+        if (!res.ok) throw new Error("bad token");
+        const data = await res.json();
+        if (!cancelled) setUser(data.user);
+      })
+      .catch(() => {
+        if (!cancelled) logout();
+      })
+      .finally(() => {
+        if (!cancelled) setChecking(false);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [token]);
 
   async function generate() {
     setLoading(true);
@@ -21,9 +73,16 @@ export default function App() {
     try {
       const res = await fetch(`${API}/api/quiz/generate`, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
         body: JSON.stringify({ notes }),
       });
+      if (res.status === 401) {
+        logout();
+        return;
+      }
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "Something went wrong");
       setQuiz(data.questions);
@@ -39,6 +98,26 @@ export default function App() {
     setAnswers({});
     setSubmitted(false);
     window.scrollTo({ top: 0, behavior: "smooth" });
+  }
+
+  if (checking) {
+    return (
+      <>
+        <Cursor />
+        <main className="app">
+          <p className="sub">Loading...</p>
+        </main>
+      </>
+    );
+  }
+
+  if (!user) {
+    return (
+      <>
+        <Cursor />
+        <Auth onAuth={handleAuth} />
+      </>
+    );
   }
 
   const wordCount = notes.trim() ? notes.trim().split(/\s+/).length : 0;
@@ -59,6 +138,14 @@ export default function App() {
       )}
 
       <main className="app">
+        <header className="topbar">
+          <span className="who">{user.name}</span>
+          <span className="xp">{user.xp} XP</span>
+          <button className="ghost" onClick={logout}>
+            Log out
+          </button>
+        </header>
+
         <h1>
           Study <span>Quest</span>
         </h1>
