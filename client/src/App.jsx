@@ -22,6 +22,8 @@ export default function App() {
   const [submitted, setSubmitted] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  const [uploading, setUploading] = useState(false);
+  const [uploadMsg, setUploadMsg] = useState("");
   const [saved, setSaved] = useState(null);
   const [saveMsg, setSaveMsg] = useState("");
   const [history, setHistory] = useState([]);
@@ -111,6 +113,52 @@ export default function App() {
       cancelled = true;
     };
   }, [token]);
+
+    async function uploadPdf(e) {
+    const file = e.target.files[0];
+    e.target.value = "";
+    if (!file) return;
+
+    setUploadMsg("");
+    setError("");
+
+    if (file.size > 5 * 1024 * 1024) {
+      setUploadMsg("PDF is too large. Maximum is 5 MB.");
+      return;
+    }
+
+    setUploading(true);
+    try {
+      const form = new FormData();
+      form.append("file", file);
+      const res = await fetch(`${API}/api/upload/pdf`, {
+        method: "POST",
+        headers: { Authorization: `Bearer ${token}` },
+        body: form,
+      });
+      if (res.status === 401) {
+        logout();
+        return;
+      }
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Could not read this PDF.");
+
+      setNotes(data.text);
+      setUploadMsg(
+        `Loaded ${data.pages} page${data.pages === 1 ? "" : "s"} from ${
+          file.name
+        }.${data.truncated ? " The text was cut to fit the limit." : ""}`
+      );
+    } catch (err) {
+      setUploadMsg(
+        err.message === "Failed to fetch"
+          ? "Cannot reach the server."
+          : err.message
+      );
+    } finally {
+      setUploading(false);
+    }
+  }
 
   async function generate() {
     setLoading(true);
@@ -300,7 +348,19 @@ export default function App() {
         />
 
         <div className="row">
-          <span className="count">{wordCount} words</span>
+                    <span className="count">
+            {wordCount} words
+            <label className="uploadlink">
+              {uploading ? "Reading PDF..." : "Upload PDF"}
+              <input
+                type="file"
+                accept="application/pdf,.pdf"
+                onChange={uploadPdf}
+                disabled={uploading}
+                hidden
+              />
+            </label>
+          </span>
           <button
             className="primary"
             onClick={generate}
@@ -310,6 +370,7 @@ export default function App() {
           </button>
         </div>
 
+        {uploadMsg && <p className="quietmsg">{uploadMsg}</p>}
         {error && <p className="error">{error}</p>}
 
         {quiz && (

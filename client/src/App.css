@@ -348,3 +348,13 @@ button {
   color: var(--good);
   font-size: 14px;
 }
+/* pdf upload */
+.uploadlink {
+  margin-left: 14px;
+  color: var(--accent);
+  text-decoration: underline;
+}
+.quietmsg {
+  color: var(--muted);
+  font-size: 14px;
+}
